@@ -19,6 +19,7 @@ pub struct Product {
     pub rating: u8,
     pub stakeholders: Vec<String>,
     pub stages: Vec<Stage>,
+    pub publisher: String,
 }
 
 impl PartialEq for Product {
@@ -40,10 +41,12 @@ impl Default for Product {
             rating: 0,
             stakeholders: vec![],
             stages: vec![],
+            publisher: "".to_string(),
         }
     }
 }
 
+#[near_bindgen]
 impl Product {
     pub fn new(
         product_id: String,
@@ -56,6 +59,7 @@ impl Product {
         rating: u8,
         stakeholders: Vec<String>,
         stages: Vec<Stage>,
+        publisher: String,
     ) -> Self {
         Self {
             product_id,
@@ -68,6 +72,7 @@ impl Product {
             rating,
             stakeholders,
             stages,
+            publisher,
         }
     }
 

@@ -53,7 +53,6 @@ impl PartialEq for Stage {
     }
 }
 
-#[near_bindgen]
 impl Stage {
     pub fn new(
         stage_id: String,

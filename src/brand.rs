@@ -10,8 +10,7 @@ pub struct Brand {
     pub title: String,
     pub summary: String,
     pub industry: String,
-    pub region: Vec<String>,
-    pub certificates: Vec<String>,
+    pub region: String,
     pub publisher: String,
 }
 
@@ -28,8 +27,7 @@ impl Default for Brand {
             title: "".to_string(),
             summary: "".to_string(),
             industry: "".to_string(),
-            region: vec![],
-            certificates: vec![],
+            region: "".to_string(),
             publisher: "".to_string(),
         }
     }
@@ -42,9 +40,9 @@ impl Brand {
         title: String,
         summary: String,
         industry: String,
-        region: Vec<String>,
-        certificates: Vec<String>,
+        region: String,
         publisher: String,
+        
     ) -> Self {
         Self {
             image,
@@ -52,7 +50,6 @@ impl Brand {
             summary,
             industry,
             region,
-            certificates,
             publisher,
         }
     }
