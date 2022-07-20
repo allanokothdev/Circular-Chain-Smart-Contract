@@ -3,117 +3,89 @@ use near_sdk::near_bindgen;
 use near_sdk::serde::{Deserialize, Serialize};
 
 use crate::stage::Stage;
-pub type Timestamp = u64;
 
 #[near_bindgen]
-#[derive(Debug, BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Product {
-    pub product_id: String,
-    pub image: String,
-    pub title: String,
-    pub summary: String,
-    pub category: String,
-    pub brand_id: String,
-    pub date: Timestamp,
-    pub rating: u8,
-    pub stakeholders: Vec<String>,
-    pub stages: Vec<Stage>,
-    pub publisher: String,
-}
-
-impl PartialEq for Product {
-    fn eq(&self, other: &Self) -> bool {
-        self.product_id == other.product_id
-    }
+    brand: String,
+    title: String,
+    image: String,
+    summary: String,
+    category: String,
+    esg_score: f64,
+    administrator: String,
+    stakeholders: Vec<String>,
+    stages: Vec<Stage>,
 }
 
 impl Default for Product {
     fn default() -> Self {
         Self {
-            product_id: "".to_string(),
-            image: "".to_string(),
+            brand: "".to_string(),
             title: "".to_string(),
+            image: "".to_string(),
             summary: "".to_string(),
             category: "".to_string(),
-            brand_id: "".to_string(),
-            date: 0,
-            rating: 0,
+            esg_score: 0 as f64,
+            administrator: "".to_string(),
             stakeholders: vec![],
             stages: vec![],
-            publisher: "".to_string(),
         }
     }
 }
 
 #[near_bindgen]
 impl Product {
-    pub fn new(
-        product_id: String,
-        image: String,
+    pub fn new_product(
+        brand: String,
         title: String,
+        image: String,
         summary: String,
         category: String,
-        brand_id: String,
-        date: Timestamp,
-        rating: u8,
+        esg_score: f64,
+        administrator: String,
         stakeholders: Vec<String>,
-        stages: Vec<Stage>,
-        publisher: String,
     ) -> Self {
-        Self {
-            product_id,
-            image,
-            title,
-            summary,
-            category,
-            brand_id,
-            date,
-            rating,
-            stakeholders,
-            stages,
-            publisher,
-        }
+        Self { 
+          brand,
+          title,
+          image,
+          summary,
+          category,
+          esg_score,
+          administrator,
+          stakeholders,
+          stages: vec![]
+         }
     }
 
-    pub fn new_stages(
+    pub fn add(
         &mut self,
-        stage_id: String,
         title: String,
-        description: String,
+        summary: String,
         location: String,
-        latitude: f64,
-        longitude: f64,
-        publisher: String,
-        date: Timestamp,
-        ingredients: Vec<String>,
-        climate: u8,
-        community: u8,
-        nature: u8,
-        waste: u8,
-        workers: u8,
+        date: u64,
+        administrator: String,
+        climate: f64,
+        community: f64,
+        nature: f64,
     ) {
-        let stage = Stage::new(
-            stage_id,
+        let stage: Stage = Stage::new(
             title,
-            description,
+            summary,
             location,
-            latitude,
-            longitude,
-            publisher,
             date,
-            ingredients,
+            administrator,
             climate,
             community,
             nature,
-            waste,
-            workers,
         );
         self.stages.push(stage);
     }
 
-    pub fn fetch_stages(&self, start: u32, limit: u32) -> Vec<Stage> {
-        let result = self
+    pub fn show(&self, start: u32, limit: u32) -> Vec<Stage> {
+        let result: Vec<Stage> = self
             .stages
             .iter()
             .skip(start as usize)
@@ -124,8 +96,8 @@ impl Product {
     }
 
     pub fn remove(&mut self, index: u64) -> Stage {
-        let size = self.stages.len() as u64;
-        assert!(size > 0 && index < size, "Stages is empty");
+        let size: u64 = self.stages.len() as u64;
+        assert!(size > 0 && index < size, "Chain is Empty!");
         self.stages.remove(index as usize)
     }
 }

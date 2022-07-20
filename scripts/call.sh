@@ -2,32 +2,11 @@
 
 source ./scripts/setting.conf
 
-# Create New Brand and add to Brands LookupMap
-near call $SUB_ACCOUNT create_brand '{"brand_id": "Jardine Matheson", "image": "https://valueinvestasia.com/wp-content/uploads/2017/07/1200px-Jardine_Matheson_Holdings_logo.jpg", "title": "Jardine Matheson", "summary": "Astra is advancing its sustainability journey, combining our focus on communities with a focus on climate and the planet", "industry": "Agribusiness", "region":  "South East Asia"}' --accountId $MASTER_ACCOUNT --amount 1
+# Add Stage to product list
+near call $SUB_ACCOUNT add_stage '{"title": "Allan", "summary": "Allan Okoth", "location": "Kenya", "climate": 5, "community": 5, "nature": 5, "product_brand_title": "Jardine Matheson", "product_image": "https://financialtribune.com/sites/default/files/field/image/17january/12_oil.jpg", "product_title": "Jardine Cooking Oil", "product_summary": "Jardine Cooking Oil from Palm Oil", "product_category": "Food", "product_esg_score": 0}' --accountId circularchain.allanokoth.testnet --amount 2
 
-# Read Brands LookupMap
-# near call $SUB_ACCOUNT read_brands '{}' --accountId allanokoth.testnet
+# Show product list content
+#near call $SUB_ACCOUNT read_wishlist '{"start": 0, "limit": 10}' --accountId allanokoth.testnet
 
-# Update Brand
-
-# Delete Brand from Brands LookupMap
-
-# Create New Product and add to Products Vector
-
-# Read Products Vector
-
-# Update Product
-
-# Delete Product from Products Vector
-
-# Create New Stage and add to Product's Stages variable
-# near call add_car '{"image": "https://www.ccarprice.com/products/Toyota_RAV4_Hybrid_LE_2022.jpg", "name": "Toyota", "model": "RAV4", "mileage": 1000, "year": "2022", "price": 5000000}' --accountId yto.testnet --amount 1
-
-# Read Stages Vector
-
-# Update Stages
-
-# Delete Stages from Product's Stages variable
-
-# Cross contract call for save_name in circularchain.allanokoth.testnet
-# near call $SUB_ACCOUNT xcc_counter '{"name": "Allan"}' --accountId yto.testnet --gas 140000000000000
+# Remove stage from product list
+#near call $SUB_ACCOUNT delete_car '{"id": 0}' --accountId allanokoth.testnet
