@@ -1,4 +1,3 @@
-// To conserve gas, efficient serialization is achieved through Borsh (http://borsh.io/)
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LookupMap;
 use near_sdk::{env, near_bindgen, setup_alloc, Promise};
@@ -11,8 +10,7 @@ use stage::Stage;
 
 setup_alloc!();
 
-// Structs in Rust are similar to other languages, and may include impl keyword as shown below
-// Note: the names of the structs are not important when calling the smart contract, but the function names are
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct CircularChain {
@@ -95,7 +93,7 @@ impl CircularChain {
             product.esg_score = aggregate_esg;
             let _lotto = &self.products.insert(&product_id, &product);
         } else {
-            println!("");
+            println!("No product with id {}", product_id);
         }
     }
 
@@ -251,7 +249,6 @@ mod tests {
         contract.add_stage(params.0, params.1, params.2, params.3, params.4, params.5, params.6, params.7, params.8, params.9, params.10, params.11);
 
         let product_id = String::from("Nestle Cooking Oil");
-
         if let Some(stages) = contract.read_stages(product_id,0, 3) {
             assert_eq!(1, stages.len());
         } else {
@@ -270,5 +267,28 @@ mod tests {
         } else {
             log(b"Error reading stages");
         }
+    }
+
+    #[test]
+    fn update_esg_score(){
+        let context = get_context(vec![], false);
+        testing_env!(context);
+        let mut contract = CircularChain::default();
+        let params = get_params();
+
+        contract.add_stage(params.0, params.1, params.2, params.3, params.4, params.5, params.6, params.7, params.8, params.9, params.10, params.11);
+
+        let product_id = String::from("Nestle Cooking Oil");
+
+        contract.update_esg_score(product_id);
+
+        let index = String::from("Nestle Cooking Oil");
+        if let Some(product) = contract.read_product(index) {
+            assert_eq!(product.esg_score,4.0);
+        } else {
+            log(b"Error in the code");
+        }
+
+
     }
 }
