@@ -19,7 +19,7 @@ pub struct CircularChain {
     products: LookupMap<String, Product>,
 }
 
-impl Default for Wishlist {
+impl Default for CircularChain {
     fn default() -> Self {
         Self {
             products: LookupMap::new(b"w".to_vec()),
@@ -28,29 +28,31 @@ impl Default for Wishlist {
 }
 
 #[near_bindgen]
-impl Wishlist {
+impl CircularChain {
     #[payable]
     pub fn add_stage(
         &mut self,
         title: String,
         summary: String,
         location: String,
-        climate: u64,
+        climate: f64,
         community: f64,
         nature: f64,
 
+        product_id: String,
         product_brand_title: String,
         product_image: String,
         product_title: String,
         product_summary: String,
-        product_category: String,
-        product_esg_score: f64,
+        product_category: String
     ) {
         let signer = env::predecessor_account_id();
         let deposit = env::attached_deposit();
         let initial_storage = self.initial_storage();
+        let product_esg_score = (climate + community + nature)/3.0;
 
-        if let Some(mut product) = self.products.get(&signer) {
+        if let Some(mut product) = self.products.get(&product_id) {
+            assert!(product.stakeholders.contains(&env::signer_account_id()), "You not authorized to contribute to this Supply Chain");
             product.add(
                 title,
                 summary,
@@ -61,7 +63,7 @@ impl Wishlist {
                 community as f64,
                 nature as f64
             );
-            self.products.insert(&signer, &product);
+            self.products.insert(&product_id, &product);
             self.settle_storage_cost(initial_storage, deposit, &signer);
         } else {
             let stakeholders = vec![env::signer_account_id()];
@@ -76,15 +78,38 @@ impl Wishlist {
                 community as f64,
                 nature as f64
             );
-            self.products.insert(&signer, &product);
+            self.products.insert(&product_id, &product);
+            self.update_esg_score(product_id);
             self.settle_storage_cost(initial_storage, deposit, &signer);
         }
     }
 
-    pub fn read_wishlist(&self, start: u32, limit: u32) -> Option<Vec<Stage>> {
-        let signer = env::predecessor_account_id();
+    pub fn update_esg_score(&mut self, product_id: String) {
+        if let Some(mut product) = self.products.get(&product_id) {
+            let mut esg_score_sum = 0.0;
+            assert_eq!(env::signer_account_id(),product.administrator, "You do not have permission to update");
+            for stage in &product.stages {
+                esg_score_sum = esg_score_sum + (stage.climate + stage.community + stage.nature)/3.0;
+            }
+            let aggregate_esg = esg_score_sum/(product.stages.len()) as f64;
+            product.esg_score = aggregate_esg;
+            let _lotto = &self.products.insert(&product_id, &product);
+        } else {
+            println!("");
+        }
+    }
 
-        if let Some(product) = self.products.get(&signer) {
+    pub fn read_product(&self, product_id: String) -> Option<Product> {
+        if let Some(product) = self.products.get(&product_id) {
+            Some(product)
+        } else {
+            None
+        }
+    }
+
+    pub fn read_stages(&self, product_id: String, start: u32, limit: u32) -> Option<Vec<Stage>> {
+
+        if let Some(product) = self.products.get(&product_id) {
             let stages: Vec<Stage> = product.show(start, limit);
             Some(stages)
         } else {
@@ -92,15 +117,16 @@ impl Wishlist {
         }
     }
 
-    pub fn delete_car(&mut self, id: u64) -> Option<Stage> {
+
+    pub fn delete_stage(&mut self, product_id: String, id: u64) -> Option<Stage> {
         let signer = env::predecessor_account_id();
         let initial_storage = self.initial_storage();
 
-        if let Some(mut product) = self.products.get(&signer) {
-            let removed_vehicle = product.remove(id);
-            self.products.insert(&signer, &product);
+        if let Some(mut product) = self.products.get(&product_id) {
+            let removed_stage = product.remove(id);
+            self.products.insert(&product_id, &product);
             self.refund_storage_cost(initial_storage, &signer);
-            Some(removed_vehicle)
+            Some(removed_stage)
         } else {
             None
         }
@@ -147,17 +173,6 @@ impl Wishlist {
     }
 }
 
-/*
- * The rest of this file holds the inline tests for the code above
- * Learn more about Rust tests: https://doc.rust-lang.org/book/ch11-01-writing-tests.html
- *
- * To run from contract directory:
- * cargo test -- --nocapture
- *
- * From project root, to run in combination with frontend tests:
- * yarn test
- *
- */
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -187,14 +202,73 @@ mod tests {
         }
     }
 
-    fn get_params() -> (String, String, String, u64, String, u64) {
-        let image: String =
-            String::from("https://www.ccarprice.com/products/Toyota_RAV4_Hybrid_LE_2022.jpg");
-        let name: String = String::from("Toyota");
-        let model: String = String::from("RAV4");
-        let mileage: u64 = 10000;
-        let year: String = String::from("2022");
-        let price: u64 = 10000000;
-        (image, name, model, mileage, year, price)
+    fn get_params() -> (String, String, String, f64, f64, f64, String, String, String, String, String, String) {
+        let title: String = String::from("Production");
+        let summary: String = String::from("Palm Oil processing plant stage in Sumatra, Indonesia");
+        let location: String = String::from("Sumatra, Indonesia");
+        let climate = 4.0;
+        let community = 4.0;
+        let nature= 4.0;
+
+        let product_id = String::from("Nestle Cooking Oil");
+        let product_brand_title: String = String::from("Nestle");
+        let product_image: String = String::from("https://financialtribune.com/sites/default/files/field/image/17january/12_oil.jpg");
+        let product_title: String = String::from("Nestle ");
+        let product_summary: String = String::from("Nestle Cooking Oil from Palm Oil");
+        let product_category: String = String::from("Food");
+            
+        (title, summary, location, climate, community, nature, product_id, product_brand_title, product_image, product_title, product_summary, product_category)
+    }
+
+    #[test]
+    fn add_to_stage() {
+        let context = get_context(vec![], false);
+        testing_env!(context);
+        let mut contract = CircularChain::default();
+        let params = get_params();
+
+        contract.add_stage(params.0, params.1, params.2, params.3, params.4, params.5, params.6, params.7, params.8, params.9, params.10, params.11);
+
+        let product_id = String::from("Nestle Cooking Oil");
+
+        if let Some(stages) = contract.read_stages(product_id,0, 3) {
+            assert_eq!(1, stages.len());
+            let test_params = get_params();
+            assert_eq!(&stages[0].title, &test_params.0);
+        } else {
+            log(b"Error in the code");
+        }
+        
+    }
+
+    #[test]
+    fn remove_from_stages() {
+        let context = get_context(vec![], false);
+        testing_env!(context);
+        let mut contract = CircularChain::default();
+        let params = get_params();
+
+        contract.add_stage(params.0, params.1, params.2, params.3, params.4, params.5, params.6, params.7, params.8, params.9, params.10, params.11);
+
+        let product_id = String::from("Nestle Cooking Oil");
+
+        if let Some(stages) = contract.read_stages(product_id,0, 3) {
+            assert_eq!(1, stages.len());
+        } else {
+            log(b"Error reading stages");
+        }
+
+        let id = String::from("Nestle Cooking Oil");
+
+        // Remove functionality
+        contract.delete_stage(id,0);
+
+        let index = String::from("Nestle Cooking Oil");
+
+        if let Some(stages) = contract.read_stages(index, 0, 3) {
+            assert_eq!(0, stages.len());
+        } else {
+            log(b"Error reading stages");
+        }
     }
 }

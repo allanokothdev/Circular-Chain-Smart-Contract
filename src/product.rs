@@ -5,7 +5,7 @@ use near_sdk::serde::{Deserialize, Serialize};
 use crate::stage::Stage;
 
 #[near_bindgen]
-#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Product {
     brand: String,
@@ -13,10 +13,10 @@ pub struct Product {
     image: String,
     summary: String,
     category: String,
-    esg_score: f64,
-    administrator: String,
-    stakeholders: Vec<String>,
-    stages: Vec<Stage>,
+    pub esg_score: f64,
+    pub administrator: String,
+    pub stakeholders: Vec<String>,
+    pub stages: Vec<Stage>,
 }
 
 impl Default for Product {
